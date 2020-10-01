@@ -57,7 +57,7 @@ impl Question {
                 self.decision = Some(decision);
                 Result::Ok(())
             }
-            Some(_) => return Result::Err(SetDecisisionError::AlreadyExists)
+            Some(_) => return Result::Err(SetDecisionError::AlreadyExists)
         }
     }
 
