@@ -126,7 +126,7 @@ impl Registry {
         }
     }
 
-    pub fn get_question(&self, identifier: String) -> Result<Question, GetQuestionError> {
+    fn get_question(&self, identifier: String) -> Result<Question, GetQuestionError> {
         match Uuid::from_str(&identifier) {
             Ok(uuid) => {
                 match self.questions.get(&uuid) {
@@ -137,6 +137,34 @@ impl Registry {
             _ => Result::Err(GetQuestionError::InvalidUUID)
         }
     }
+
+    fn add_question_context(&self, identifier: String, new_contexts: HashSet<String>){
+        match self.get_question(identifier) {
+            Ok(mut question) => {
+                new_contexts.iter().for_each(|context| question.add_context(context.to_string()))
+            },
+            Err(_) => ()
+        }
+    }
+
+    fn add_question_option(&self, identifier: String, new_options: HashSet<String>){
+        match self.get_question(identifier) {
+            Ok(mut question) => {
+                new_options.iter().for_each(|context| question.add_option(context.to_string()))
+            },
+            Err(_) => ()
+        }
+    }
+
+    fn set_question_decision(&self, identifier: String, decision: Decision){
+        match self.get_question {
+            Ok(mut question) => {
+                question.set_decision(decision)
+            },
+            Err(_) => ()
+        }
+    }
+
 }
 
 #[cfg(test)]
@@ -172,7 +200,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add_and_get_question() -> Result<(), AddQuestionError> {
+    fn test_add_and_question() -> Result<(), AddQuestionError> {
         let mut registry = Registry::new();
         add_some_default_tags(&mut registry);
         let mut question_tags : HashSet<String> = HashSet::new();
@@ -182,7 +210,6 @@ mod tests {
                                      HashSet::new(),
                                      HashSet::new());
         let identifier = registry.add_question(question)?;
-        registry.get_question(identifier);
         Result::Ok(())
     }
 
