@@ -24,13 +24,13 @@ pub enum SetDecisionError {
 }
 
 impl Question {
-    fn new(content: String, tags: HashSet<String>) -> Question {
+    fn new(content: String, tags: HashSet<String>, context: HashSet<String>, options: HashSet<String>) -> Question {
         Question {
             identifier: Uuid::new_v4(),
             content,
             tags,
-            context: Default::default(),
-            options: Default::default(),
+            context,
+            options,
             decision: None
         }
     }
@@ -178,7 +178,9 @@ mod tests {
         let mut question_tags : HashSet<String> = HashSet::new();
         question_tags.insert(TAG_A.parse().unwrap());
         let question = Question::new("How many tests will luke end up writing?".to_string(),
-                                     question_tags);
+                                     question_tags,
+                                     HashSet::new(),
+                                     HashSet::new());
         let identifier = registry.add_question(question)?;
         registry.get_question(identifier);
         Result::Ok(())
@@ -192,7 +194,9 @@ mod tests {
         let mut question_tags : HashSet<String> = HashSet::new();
         question_tags.insert(fake_project_name.clone());
         let question = Question::new("How many tests will luke end up writing?".to_string(),
-                                     question_tags);
+                                     question_tags,
+                                     HashSet::new(),
+                                     HashSet::new());
         match registry.add_question(question) {
             Ok(_) => panic!("This should have never worked!"),
             Err(AddQuestionError::UsesNonExistentTags(tags)) => assert!(tags.contains(&fake_project_name)),
@@ -202,7 +206,15 @@ mod tests {
 
     #[test]
     fn test_adding_context_to_question(){
-
+        let mut registry = Registry::new();
+        add_some_default_tags(&mut registry);
+        let mut question_tags : HashSet<String> = HashSet::new();
+        question_tags.insert(TAG_A.parse().unwrap());
+        let question = Question::new("How many tests will luke end up writing?".to_string(),
+                                     question_tags,
+                                     HashSet::new(),
+                                    HashSet::new());
+        let identifier = registry.add_question(question);
     }
 
 }
