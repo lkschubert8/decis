@@ -1,15 +1,18 @@
 use std::collections::{HashSet, HashMap};
 use uuid::Uuid;
 use std::str::FromStr;
+use serde::{Serialize, Deserialize};
+use std::io::{Cursor, Read};
+use std::fs::File;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct Decision {
     choice: String,
     rationale: String,
     decision_makers: HashSet<String>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct Question {
     identifier: Uuid,
     content: String,
@@ -66,6 +69,7 @@ impl Question {
     }
 }
 
+#[derive(Serialize)]
 pub struct Registry {
     tags: HashSet<String>,
     questions: HashMap<Uuid, Question>,
@@ -138,7 +142,7 @@ impl Registry {
         }
     }
 
-    fn add_question_context(&self, identifier: String, new_contexts: HashSet<String>){
+    pub fn add_question_context(&self, identifier: String, new_contexts: HashSet<String>){
         match self.get_question(identifier) {
             Ok(mut question) => {
                 new_contexts.iter().for_each(|context| question.add_context(context.to_string()))
@@ -147,7 +151,7 @@ impl Registry {
         }
     }
 
-    fn add_question_option(&self, identifier: String, new_options: HashSet<String>){
+    pub fn add_question_option(&self, identifier: String, new_options: HashSet<String>){
         match self.get_question(identifier) {
             Ok(mut question) => {
                 new_options.iter().for_each(|context| question.add_option(context.to_string()))
@@ -156,13 +160,21 @@ impl Registry {
         }
     }
 
-    fn set_question_decision(&self, identifier: String, decision: Decision){
-        match self.get_question {
+    pub fn set_question_decision(&self, identifier: String, decision: Decision){
+        match self.get_question(identifier) {
             Ok(mut question) => {
-                question.set_decision(decision)
+                question.set_decision(decision);
             },
             Err(_) => ()
         }
+    }
+
+    fn serialize_cbor(&self, path: &str){
+        serde_cbor::to_writer(File::create(path).unwrap(), self);
+    }
+
+    pub fn serialize_json(&self) -> String{
+        serde_json::to_string(self).unwrap()
     }
 
 }
@@ -242,6 +254,34 @@ mod tests {
                                      HashSet::new(),
                                     HashSet::new());
         let identifier = registry.add_question(question);
+    }
+
+    #[test]
+    fn test_serialization(){
+        let mut registry = Registry::new();
+        add_some_default_tags(&mut registry);
+        let mut question_tags : HashSet<String> = HashSet::new();
+        question_tags.insert(TAG_A.parse().unwrap());
+        let question = Question::new("How many tests will luke end up writing?".to_string(),
+                                     question_tags,
+                                     HashSet::new(),
+                                     HashSet::new());
+        registry.add_question(question);
+        assert_eq!(registry.serialize_json(), "");
+    }
+
+    #[test]
+    fn test_cbor_serialization(){
+        let mut registry = Registry::new();
+        add_some_default_tags(&mut registry);
+        let mut question_tags : HashSet<String> = HashSet::new();
+        question_tags.insert(TAG_A.parse().unwrap());
+        let question = Question::new("How many tests will luke end up writing?".to_string(),
+                                     question_tags,
+                                     HashSet::new(),
+                                     HashSet::new());
+        registry.add_question(question);
+        registry.serialize_cbor("something.txt")
     }
 
 }
